@@ -32,8 +32,8 @@ from nltk.util import ngrams
 
 from ftfy import fix_encoding
 
-from translate_api.translate_api import api
-from googletrans import Translator
+#from translate_api.translate_api import api
+#from googletrans import Translator
 
 from pattern.en import spelling
 
@@ -46,16 +46,16 @@ class Res():
     """
     Reduces repeated characters in word
     """
-    def reduce_lengthening(text):
+    def reduce_lengthening(self, tokens):
         pattern = re.compile(r"(.)\1{2,}")
-        return pattern.sub(r"\1\1", text)
+        return pattern.sub(r"\1\1", tokens)
 
 
     """
     Reduces repeated characters in word
     """
-    def spelling(text):
-        correct_word = spelling(text) 
+    def sp(self, tokens):
+        correct_word = spelling(tokens) 
         return(correct_word)
     
 #    def translate(self, raw):
@@ -91,7 +91,7 @@ class Res():
             Converts CSV to pandas Dataframe
 
             Paras:
-                path: path to csv sheet
+                path: pfath to csv sheet
             
             Return:
                 df: extracted dataframe
@@ -173,16 +173,16 @@ class Res():
     """
     tokenize sentence into work tokens
     """
-    def token_nize(self, text):
-        words = word_tokenize(str(text))
+    def token_nize(self, tokens):
+        words = word_tokenize(str(tokens))
         print("T:", words)
         return(words)
         
     """
     Normalize word Lower all capitilization
     """
-    def lower(text):
-        low = [word.lower() for word in text]
+    def lower(self, tokens):
+        low = [word.lower() for word in tokens]
         print("hter")
         print("L:", low)
         return(low)
@@ -266,7 +266,9 @@ class Res():
     Select only english text
     """
     def english(self, tokens):
-        return [w for w in tokens if wordnet.synsets(w)]
+            if wordnet.synsets(tokens):
+                w = tokens
+            return w 
 
         
     def remove_contractions(self, raw):
@@ -373,13 +375,13 @@ class Res():
         else:
             return raw
 
-    def clean_text(self, text, remove_stopwords = True, lemmatize = True, english = True, ngrams=False):
+    def clean_text(self, text, remove_stopwords = True, lemmatize = True, english = True, ngrams = True):
         """
             Remove unwanted characters, stopwords, and format the text to create fewer nulls word embeddings
             check spelling, lemmatize and compare with wordnet corpus for english words
             Paras:
                 text: text data to clean
-                remove_stopwords: if true, remove stop words from text to reduce noise
+                remove_stopwords: if true, remove stop words  text to reduce noise
                 lemmatize: if true lemmatizes word
                 english: if true compares w/ wordnet corpus to keep only english words
                 ngrams: if true creates ngrams 
@@ -399,35 +401,38 @@ class Res():
         text = re.sub(r'[^a-zA-Z]', " ", text)
         
         print("LENGTH")
-        text = [self.reduce_lengthening(w) for w in self.token_nize(text)]
-        text = " ".join(text)
+        #text = text.split()
+        text = self.reduce_lengthening(text)# for w in text]
+        #text = " ".join(text)
         
-        print("SPELLING")
-        text = [self.spelling(w) for w in self.token_nize(text)]
-        text = " ".join(text)
-        
-        if english:
-            print("ENGLISH")
-            text = [self.english(w) for w in self.token_nize(text)
-            text = " ".join(text)
+#        print("SPELLING")
+#        text = self.sp(text) #for w in self.token_nize(text)]
+#        text = " ".join(text)
+#        
+#        if english:
+#            print("ENGLISH")
+#            text = text.split()
+#            text = [self.english(w) for w in text]
+#            text = " ".join(text)
 
-        if remove_stopwords:
-            print("STOP")
-            text = text.split()
-            stops = set(stopwords.words("english"))
-            text = [w for w in text if not w in stops]
-            text = " ".join(text)
-        
-        if lemmatize:
-            print("LEM")
-            text = text.split()
-            text = [WordNetLemmatizer().lemmatize(w) for w in text]
-            text = " ".join(text)
-            
-         if ngrams:
+#        if remove_stopwords:
+#            print("STOP")
+#            text = text.split()
+#            stops = set(stopwords.words("english"))
+#            text = [w for w in text if not w in stops]
+#            text = " ".join(text)
+#        
+#        if lemmatize:
+#            print("LEM")
+#            text = text.split()
+#            text = [WordNetLemmatizer().lemmatize(w) for w in text]
+#            text = " ".join(text)
+#            
+        if ngrams:
             print("NGRAM")
-            text = [self.nGrams(w) for w in self.token_nize(text)
-            text = " ".join(text) 
+            text = text.split()
+            text = [self.nGrams(text)]
+            #text = " ".join(text) 
             
         return text
 

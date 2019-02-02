@@ -40,7 +40,8 @@ class Pipe():
         """
         print("here")
         description = [re.sub(r"[^a-zA-Z]", " ", description[i].lower()) for i in range(len(description))]
-        return list(self.pool.map(self.utls.clean_text, description))
+        print("Desc: ", description)
+        return list(self.pool.map(self.res.clean_text(), description))
 
     def createDataframe(self, description):
         """
@@ -57,18 +58,22 @@ class Pipe():
             Runs DataProcessing class
             Paras:
                 None
-            Returns:
+            Returns:_
                 None
         """
+        
         print("here2")
-        dataframe = self.res.loadData("./Data", column_names)
-        print("D: ", dataframe)
+        dataframe = self.res.loadData(r"./Data", column_names)
+        print("D: ", dataframe["Description_Document"])
         description = self.getDescription(list(dataframe["Description_Document"]))
+        print("HHHHH")
 #        review = self.getReview(list(dataframe["reviewText"]))
 #        reviews = self.utls.concate_columns(summaries, review)
 #        rating = list(dataframe["overall"])
         return self.createDataframe(description)
 
 if __name__ == "__main__":
+    pd.set_option('display.max_colwidth', -1)
     Preprocessing = Pipe()
     dataframe = Preprocessing.ProcessData()
+    print("df: ", dataframe)

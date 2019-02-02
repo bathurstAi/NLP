@@ -23,12 +23,52 @@ from nltk.tokenize import word_tokenize, sent_tokenize
 from nltk.stem import PorterStemmer
 from nltk.stem import SnowballStemmer
 from nltk.stem.lancaster import LancasterStemmer
+from nltk.stem import WordNetLemmatizer
 
 from nltk.tokenize import TreebankWordTokenizer
 from nltk.tokenize import WordPunctTokenizer 
 
+from nltk.util import ngrams
+
+from ftfy import fix_encoding
+
+from translate_api.translate_api import api
+from googletrans import Translator
+
+from pattern.en import spelling
+
+from nltk.corpus import wordnet
+
 
 class Res():
+     
+
+    """
+    Reduces repeated characters in word
+    """
+    def reduce_lengthening(text):
+        pattern = re.compile(r"(.)\1{2,}")
+        return pattern.sub(r"\1\1", text)
+
+
+    """
+    Reduces repeated characters in word
+    """
+    def spelling(text):
+        correct_word = spelling(text) 
+        return(correct_word)
+    
+#    def translate(self, raw):
+#         for index, row in raw.iterrows():
+#            # REINITIALIZE THE API
+#            translator = Translator()
+#            try
+#                translated = translator.translate(row, dest='en')
+#                raw.set_value(index, 'Text', translated.text)
+#            except Exception as e:
+#                print(str(e))
+#                continue
+#        return(raw)
 
     def makedirs(self, directory):
         """
@@ -56,7 +96,20 @@ class Res():
             Return:
                 df: extracted dataframe
         """
-        return pd.read_csv(path)
+        return pd.read_csv(path, encoding = 'utf-8')
+    
+    def pd_xlsx(self, path):
+        """
+            Converts XLSX to pandas Dataframe
+
+            Paras:
+                path: path to xlsx sheet
+            
+            Return:
+                df: extracted dataframe
+        """
+        print("GGGG")
+        return pd.read_excel('Data_Cleaned.xlsx')
 
     def remove_columns(self, dataframe, column_names):
         """
@@ -178,12 +231,18 @@ class Res():
         ss = SnowballStemmer()
         for w in token:
             print(ss.stem(w))
-     
+    
+    """
+    Detrmine unique words
+    """  
+    def unique(self, raw):      
+        return(raw.unique())
+        
     """
     Analyze structure of text
     """
     # Structure analysis
-    def stucAnalysis(token):
+    def stucAnalysis(self, token):
         num_words = token.apply(lambda x: len(x.split()))
         num_words_mean, num_words_std = np.mean(num_words), np.std(num_words)
         print("Number of words: ", num_words)
@@ -193,7 +252,23 @@ class Res():
         num_sentences = token.apply(lambda x: len(re.split( '~ ...' ,'~'.join(x.split('.')))))
         num_sentences_mean = np.mean(num_sentences)
         print("Number of sentences: ", num_sentences_mean)
-         
+        
+        
+    """
+    Select number of ngrams
+    """
+    def nGrams(self, tokens, num=2):
+        grams = ngrams(tokens,num)
+        return [grams for grams in grams]
+    
+        
+    """
+    Select only english text
+    """
+    def english(self, tokens):
+        return [w for w in tokens if wordnet.synsets(w)]
+
+        
     def remove_contractions(self, raw):
         """
             Removes contractions to clean sentences
@@ -298,16 +373,20 @@ class Res():
         else:
             return raw
 
-    def clean_text(self, text, remove_stopwords = True):
+    def clean_text(self, text, remove_stopwords = True, lemmatize = True, english = True, ngrams=False):
         """
             Remove unwanted characters, stopwords, and format the text to create fewer nulls word embeddings
-
+            check spelling, lemmatize and compare with wordnet corpus for english words
             Paras:
                 text: text data to clean
                 remove_stopwords: if true, remove stop words from text to reduce noise
+                lemmatize: if true lemmatizes word
+                english: if true compares w/ wordnet corpus to keep only english words
+                ngrams: if true creates ngrams 
             Returns:
                 text: cleaned text data
         """
+        print("CLEAN")
         text = [self.remove_contractions(word) for word in sent_tokenize(text.lower())]
         text = " ".join(text)
 
@@ -318,13 +397,38 @@ class Res():
         text = re.sub(r'<br />', ' ', text)
         text = re.sub(r'\'', ' ', text)
         text = re.sub(r'[^a-zA-Z]', " ", text)
+        
+        print("LENGTH")
+        text = [self.reduce_lengthening(w) for w in self.token_nize(text)]
+        text = " ".join(text)
+        
+        print("SPELLING")
+        text = [self.spelling(w) for w in self.token_nize(text)]
+        text = " ".join(text)
+        
+        if english:
+            print("ENGLISH")
+            text = [self.english(w) for w in self.token_nize(text)
+            text = " ".join(text)
 
         if remove_stopwords:
+            print("STOP")
             text = text.split()
             stops = set(stopwords.words("english"))
             text = [w for w in text if not w in stops]
             text = " ".join(text)
-
+        
+        if lemmatize:
+            print("LEM")
+            text = text.split()
+            text = [WordNetLemmatizer().lemmatize(w) for w in text]
+            text = " ".join(text)
+            
+         if ngrams:
+            print("NGRAM")
+            text = [self.nGrams(w) for w in self.token_nize(text)
+            text = " ".join(text) 
+            
         return text
 
     def save_data(self, directory, name, docs, mode = "w"):
@@ -363,10 +467,11 @@ class Res():
                 df: merged dataframes
         """
         print("here3")
-        files = [doc for doc in listdir(path) if doc.endswith(".csv")]
+        #files = [doc for doc in listdir(path) if doc.endswith(".csv")]
+        files = [doc for doc in listdir(path) if doc.endswith(".xlsx")]
         print("here4")
         print(files)
-        dataframes = [self.pd_csv(join(path, sheet)) for sheet in files]
+        dataframes = [self.pd_xlsx(join(path, sheet)) for sheet in files]
         print("here5")
         if len(dataframes)>1: return self.merge_workbooks(dataframes, column_names)
         else: return dataframes[0]

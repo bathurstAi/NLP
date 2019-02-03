@@ -175,7 +175,7 @@ class Res():
     """
     def token_nize(self, tokens):
         words = word_tokenize(str(tokens))
-        print("T:", words)
+        
         return(words)
         
     """
@@ -183,8 +183,6 @@ class Res():
     """
     def lower(self, tokens):
         low = [word.lower() for word in tokens]
-        print("hter")
-        print("L:", low)
         return(low)
         
         
@@ -471,13 +469,12 @@ class Res():
             Return:
                 df: merged dataframes
         """
-        print("here3")
         #files = [doc for doc in listdir(path) if doc.endswith(".csv")]
         files = [doc for doc in listdir(path) if doc.endswith(".xlsx")]
         print("here4")
         print(files)
         dataframes = [self.pd_xlsx(join(path, sheet)) for sheet in files]
-        print("here5")
+       
         if len(dataframes)>1: return self.merge_workbooks(dataframes, column_names)
         else: return dataframes[0]
 

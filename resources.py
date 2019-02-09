@@ -15,6 +15,9 @@ import unidecode
 import pandas as pd
 import numpy as np
 
+import spacy
+import sys
+
 from os import listdir, makedirs
 from os.path import exists, join
 from nltk.corpus import stopwords
@@ -30,19 +33,32 @@ from nltk.tokenize import WordPunctTokenizer
 
 from nltk.util import ngrams
 
-from ftfy import fix_encoding
+#from ftfy import fix_encoding
 
 #from translate_api.translate_api import api
 #from googletrans import Translator
 
 from pattern.en import spelling
+from pattern.en import suggest
 
 from nltk.corpus import wordnet
 
 
-class Res():
-     
 
+class Res():
+    
+    """
+    Initialize spaCy
+    """
+    nlp = spacy.load('en', disable=['parser', 'ner'])
+    
+    """
+    spaCy lemmitization
+    """
+    def spCy(self, text):
+        doc = self.nlp(text)
+        return ([token.lemma_ for token in doc])
+    
     """
     Reduces repeated characters in word
     """
@@ -50,14 +66,21 @@ class Res():
         pattern = re.compile(r"(.)\1{2,}")
         return pattern.sub(r"\1\1", tokens)
 
-
     """
-    Reduces repeated characters in word
+    Checks for spelling
     """
     def sp(self, tokens):
         correct_word = spelling(tokens) 
         return(correct_word)
-    
+        
+    """
+    Correct spelling
+    """  
+    def corr(self, text):
+        word = suggest(text)
+        max_word=max(word[:][1])
+        return max_word[0]
+
 #    def translate(self, raw):
 #         for index, row in raw.iterrows():
 #            # REINITIALIZE THE API
@@ -69,6 +92,7 @@ class Res():
 #                print(str(e))
 #                continue
 #        return(raw)
+        
 
     def makedirs(self, directory):
         """
@@ -175,7 +199,7 @@ class Res():
     """
     def token_nize(self, tokens):
         words = word_tokenize(str(tokens))
-        
+        print("T:", words)
         return(words)
         
     """
@@ -183,6 +207,8 @@ class Res():
     """
     def lower(self, tokens):
         low = [word.lower() for word in tokens]
+        print("hter")
+        print("L:", low)
         return(low)
         
         
@@ -265,8 +291,22 @@ class Res():
     """
     def english(self, tokens):
             if wordnet.synsets(tokens):
-                w = tokens
-            return w 
+                word = tokens
+                print("Word: ", word)
+            return word 
+    
+    """
+    Get worknet POS tag for lemmitization (select NOUNS)
+    """
+    def getWordnetPos(self, word):
+        """Map POS tag to first character lemmatize() accepts"""
+        tag = nltk.pos_tag([word])[0][1][0].upper()
+        tag_dict = {"J": wordnet.ADJ,
+                    "N": wordnet.NOUN,
+                    "V": wordnet.VERB,
+                    "R": wordnet.ADV}
+
+        return tag_dict.get(tag, wordnet.NOUN)
 
         
     def remove_contractions(self, raw):
@@ -373,7 +413,9 @@ class Res():
         else:
             return raw
 
-    def clean_text(self, text, remove_stopwords = True, lemmatize = True, english = True, ngrams = True):
+    def clean_text(self, text, short = True, length = True, contra = True, remove_stopwords = True, lemmatize = True, english = False, ngrams = False, spelling = True, spCy=False):
+        print("cleantoo")
+       # print("T:", text)
         """
             Remove unwanted characters, stopwords, and format the text to create fewer nulls word embeddings
             check spelling, lemmatize and compare with wordnet corpus for english words
@@ -386,46 +428,61 @@ class Res():
             Returns:
                 text: cleaned text data
         """
-        print("CLEAN")
-        text = [self.remove_contractions(word) for word in sent_tokenize(text.lower())]
-        text = " ".join(text)
-
-        text = re.sub(r'https?:\/\/.*[\r\n]*', '', text, flags=re.MULTILINE)
-        text = re.sub(r'\<a href', ' ', text)
-        text = re.sub(r'&amp;', '', text) 
-        text = re.sub(r'[_"\-;%()|+&=*%.,!?:#$@\[\]/]', ' ', text)
-        text = re.sub(r'<br />', ' ', text)
-        text = re.sub(r'\'', ' ', text)
-        text = re.sub(r'[^a-zA-Z]', " ", text)
+        if contra:
+            print("CLEAN")
+            text = [self.remove_contractions(word) for word in sent_tokenize(text.lower())]
+            text = " ".join(text)
+    
+            text = re.sub(r'https?:\/\/.*[\r\n]*', '', text, flags=re.MULTILINE)
+            text = re.sub(r'\<a href', ' ', text)
+            text = re.sub(r'&amp;', '', text) 
+            text = re.sub(r'[_"\-;%()|+&=*%.,!?:#$@\[\]/]', ' ', text)
+            text = re.sub(r'<br />', ' ', text)
+            text = re.sub(r'\'', ' ', text)
+            text = re.sub(r'[^a-zA-Z]', " ", text)
         
-        print("LENGTH")
+        if length:
+            print("LENGTH")
         #text = text.split()
-        text = self.reduce_lengthening(text)# for w in text]
+            text = self.reduce_lengthening(text)# for w in text]
         #text = " ".join(text)
         
-#        print("SPELLING")
-#        text = self.sp(text) #for w in self.token_nize(text)]
-#        text = " ".join(text)
-#        
-#        if english:
-#            print("ENGLISH")
-#            text = text.split()
-#            text = [self.english(w) for w in text]
-#            text = " ".join(text)
-
-#        if remove_stopwords:
-#            print("STOP")
-#            text = text.split()
-#            stops = set(stopwords.words("english"))
-#            text = [w for w in text if not w in stops]
-#            text = " ".join(text)
-#        
-#        if lemmatize:
-#            print("LEM")
-#            text = text.split()
-#            text = [WordNetLemmatizer().lemmatize(w) for w in text]
-#            text = " ".join(text)
-#            
+        if spelling:
+           print("SPELLING")
+           text = text.split()
+           word = suggest(text)
+           max_word=max(word[:][1])
+           #for w in self.token_nize(text)]
+           text = " ".join(max_word[0])
+        
+        if remove_stopwords:
+            print("STOP")
+            text = text.split()
+            stops = set(stopwords.words("english"))
+            text = [w for w in text if not w in stops]
+            text = " ".join(text)
+            
+        if short:
+           print("SHORT")
+           text = ' '.join([w for w in text.split() if len(w)>3])
+           print("S: ", text)          
+        
+        if lemmatize:
+            print("LEM")
+            text_sent = nltk.word_tokenize(text)
+            text = [WordNetLemmatizer().lemmatize(w, self.getWordnetPos(w)) for w in text_sent]
+            text = " ".join(text)
+        
+        # Spacy Lemmtization
+        if spCy:
+            text = " ".join(self.spCy(text))
+        
+            
+        if english:
+            print("ENGLISH")
+            text = ' '.join([w for w in text.split() if wordnet.synsets(w)])
+            print("P: ", text)
+            
         if ngrams:
             print("NGRAM")
             text = text.split()
@@ -469,12 +526,11 @@ class Res():
             Return:
                 df: merged dataframes
         """
+        print("here3")
         #files = [doc for doc in listdir(path) if doc.endswith(".csv")]
         files = [doc for doc in listdir(path) if doc.endswith(".xlsx")]
-        print("here4")
         print(files)
         dataframes = [self.pd_xlsx(join(path, sheet)) for sheet in files]
-       
         if len(dataframes)>1: return self.merge_workbooks(dataframes, column_names)
         else: return dataframes[0]
 

@@ -1,0 +1,183 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Feb 13 16:48:01 2019
+
+@author: kishite
+"""
+
+import re
+import pandas as pd
+
+from os.path import join
+
+from nltk.tokenize import word_tokenize
+from resources import Res
+from pipeData import Pipe
+from featureEng import Vec
+
+from keras.models import Sequential
+from keras.layers import Dense, Embedding, LSTM, GRU
+from keras.layers.embeddings import Embedding
+from keras.initializers import Constant
+
+class classifierNLP():
+    
+    """
+    Initalize resources, preprcess and feature engineering classes
+    """
+    self.res = Res()
+    self.preprocess = Pipe()
+    self.feature = Vec()
+    
+    def setParameters(self, lr = None, lrUpdateRate = None, dim = None, ws = None, epoch = None, neg = None, loss = None, thread = None, saveOutput = None):
+        """
+            Sets parameters to train NN
+
+            Paras:
+                -lr                 learning rate [0.05]
+                -lrUpdateRate       change the rate of updates for the learning rate [100]
+                -dim                size of word vectors [100]
+                -ws                 size of the context window [5]
+                -epoch              number of epochs [5]
+                -neg                number of negatives sampled [5]
+                -loss               loss function {ns, hs, softmax} [ns]
+                -thread             number of threads [12]
+                -pretrainedVectors  pretrained word vectors for supervised learning []
+                -saveOutput         whether output params should be saved [0]
+            Returns:
+                training parameters
+        """
+        if lr == None: lr = " "
+        else: lr = "-lr %s " %lr
+        
+        if lrUpdateRate == None: lrUpdateRate = " "
+        else: lrUpdateRate = "-lrUpdateRate %s " %lrUpdateRate
+        
+        if dim == None: dim = " "
+        else: dim = "-dim %s " %dim
+        
+        if ws == None: ws = " "
+        else: ws = "-ws %s " %ws
+        
+        if epoch == None: epoch = " "
+        else: epoch = "-epoch %s " %epoch
+        
+        if neg == None: neg = " "
+        else: neg = "-neg %s " %neg
+        
+        if loss == None: loss = " "
+        else: loss = "-loss %s " %loss
+        
+        if thread == None: thread = " "
+        else: thread = "-thread %s " %thread
+        
+        if saveOutput == None: saveOutput = " "
+        else: saveOutput = "-saveOutput %s " %saveOutput
+        
+        return lr + lrUpdateRate + dim + ws + epoch + neg + loss + thread + saveOutput
+
+    def trainClassifier(self, hyper_parameters):
+        """
+            Trains supervised classifier
+            Paras:
+                hyper_parameters: parameters to train neural net
+            Returns:
+                None
+        """
+        self.utls.makedirs("./fastTextModels")
+        system("./fastText/fasttext supervised -input ./Dataset/training_processed/training.txt -output ./fastTextModels/model_1 -label __label__ {}").format(hyper_parameters)
+       
+     def neural():
+         model = Sequential()
+         embedding_layer=Enbedding(num_words),
+                                    EMBEDDING_DIM, 
+                                    embeddings_initalizer=Constan(embedding_matrix)
+                                    input_length=max_length,
+                                    trainable=False)
+        model.add(embedding_layer)
+        model.add(GRU(units=32, dropout=0.2, recurrent_dropout=0.2))
+        model.add(Dense(1, activation='sigmoid'))
+        
+        #try using different optimizers and different optimizer configs
+        model.compile(loss='binary_crossentropy', optimier='adam', metrics=['mae'])
+
+    def naive():
+        # Naive Bayes on Count Vectors
+        accuracy = train_model(naive_bayes.MultinomialNB(), xtrain_count, train_y, xvalid_count)
+        print "NB, Count Vectors: ", accuracy
+        
+        # Naive Bayes on Word Level TF IDF Vectors
+        accuracy = train_model(naive_bayes.MultinomialNB(), xtrain_tfidf, train_y, xvalid_tfidf)
+        print "NB, WordLevel TF-IDF: ", accuracy
+        
+        # Naive Bayes on Ngram Level TF IDF Vectors
+        accuracy = train_model(naive_bayes.MultinomialNB(), xtrain_tfidf_ngram, train_y, xvalid_tfidf_ngram)
+        print "NB, N-Gram Vectors: ", accuracy
+        
+        # Naive Bayes on Character Level TF IDF Vectors
+        accuracy = train_model(naive_bayes.MultinomialNB(), xtrain_tfidf_ngram_chars, train_y, xvalid_tfidf_ngram_chars)
+        print "NB, CharLevel Vectors: ", accuracy
+        
+    def linear():
+        # Linear Classifier on Count Vectors
+        accuracy = train_model(linear_model.LogisticRegression(), xtrain_count, train_y, xvalid_count)
+        print "LR, Count Vectors: ", accuracy
+        
+        # Linear Classifier on Word Level TF IDF Vectors
+        accuracy = train_model(linear_model.LogisticRegression(), xtrain_tfidf, train_y, xvalid_tfidf)
+        print "LR, WordLevel TF-IDF: ", accuracy
+        
+        # Linear Classifier on Ngram Level TF IDF Vectors
+        accuracy = train_model(linear_model.LogisticRegression(), xtrain_tfidf_ngram, train_y, xvalid_tfidf_ngram)
+        print "LR, N-Gram Vectors: ", accuracy
+        
+        # Linear Classifier on Character Level TF IDF Vectors
+        accuracy = train_model(linear_model.LogisticRegression(), xtrain_tfidf_ngram_chars, train_y, xvalid_tfidf_ngram_chars)
+        print "LR, CharLevel Vectors: ", accuracy
+        
+    def SVM():
+       # SVM on Ngram Level TF IDF Vectors
+        accuracy = train_model(svm.SVC(), xtrain_tfidf_ngram, train_y, xvalid_tfidf_ngram)
+        print "SVM, N-Gram Vectors: ", accuracy 
+        
+    def ranFor():
+        # RF on Count Vectors
+        accuracy = train_model(ensemble.RandomForestClassifier(), xtrain_count, train_y, xvalid_count)
+        print "RF, Count Vectors: ", accuracy
+        
+        # RF on Word Level TF IDF Vectors
+        accuracy = train_model(ensemble.RandomForestClassifier(), xtrain_tfidf, train_y, xvalid_tfidf)
+        print "RF, WordLevel TF-IDF: ", accuracy
+    
+    def boosting():
+        # Extereme Gradient Boosting on Count Vectors
+        accuracy = train_model(xgboost.XGBClassifier(), xtrain_count.tocsc(), train_y, xvalid_count.tocsc())
+        print "Xgb, Count Vectors: ", accuracy
+        
+        # Extereme Gradient Boosting on Word Level TF IDF Vectors
+        accuracy = train_model(xgboost.XGBClassifier(), xtrain_tfidf.tocsc(), train_y, xvalid_tfidf.tocsc())
+        print "Xgb, WordLevel TF-IDF: ", accuracy
+        
+        # Extereme Gradient Boosting on Character Level TF IDF Vectors
+        accuracy = train_model(xgboost.XGBClassifier(), xtrain_tfidf_ngram_chars.tocsc(), train_y, xvalid_tfidf_ngram_chars.tocsc())
+        print "Xgb, CharLevel Vectors: ", accuracy
+        
+    def NN(input_size):
+        # create input layer 
+        input_layer = layers.Input((input_size, ), sparse=True)
+        
+        # create hidden layer
+        hidden_layer = layers.Dense(100, activation="relu")(input_layer)
+        
+        # create output layer
+        output_layer = layers.Dense(1, activation="sigmoid")(hidden_layer)
+    
+        classifier = models.Model(inputs = input_layer, outputs = output_layer)
+        classifier.compile(optimizer=optimizers.Adam(), loss='binary_crossentropy')
+        return classifier 
+
+        classifier = create_model_architecture(xtrain_tfidf_ngram.shape[1])
+        accuracy = train_model(classifier, xtrain_tfidf_ngram, train_y, xvalid_tfidf_ngram, is_neural_net=True)
+        print "NN, Ngram Level TF IDF Vectors",  accuracy 
+if __name__ == "__main__":
+    

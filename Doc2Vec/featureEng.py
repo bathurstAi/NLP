@@ -163,51 +163,106 @@ class Vec():
         encoder = preprocessing.LabelEncoder()
         train_y = encoder.fit_transform(train_y)
         valid_y = encoder.fit_transform(valid_y)
+        return(train_x, valid_x, train_y, valid_y)
         
     """
     Matrix of words to vector
     """
     def mapping(self, obj, tag):
         # pair word and vector together 
-        embeddings_index = {}
+        embeddings_index_all = {}
+        
         for i in range(len(tag)):
-            print("I:", i)
-            print("Length: ", len(tag[i].words))
+#            print("I:", i)
+#            print("Length: ", len(tag[i].words))
+            embeddings_index = {}
             for j in range(len(tag[i].words)):
-                print("J: ", j)
+#                print("J: ", j)
                 embeddings_index[tag[i].words[j]] = obj.docvecs[i][j]
-                print("eb: ", embeddings_index)
+                embeddings_index_all[i]=embeddings_index
+#        print("eb: ", embeddings_index.items())
+#        print("eb2: ", embeddings_index)
+        print("all: ", embeddings_index_all)
                 
+        df = pd.DataFrame.from_dict(embeddings_index_all, orient='index')
+        #df2 = df.transpose()
+        df.fillna(0, inplace=True)
+        print("D:",df)
+        df.shape
+        df.head()
+        #print("D2:",df2)
+        return(df)        
         
-            embedding_matrix = np.zeros((len(tag) + 70))
-            for word in tag[i].words:
-                embedding_vector = embeddings_index.get(word)
-                if embedding_vector is not None:
-                    embedding_matrix[i] = embedding_vector
-                print("Matrix: ", embedding_matrix)                
-        print("M: ", embedding_matrix)
-        
+#            embedding_matrix = np.zeros((len(tag)))
+#            #embedding_matrix = []
+#            for word in tag[i].words:
+#                embedding_vector = embeddings_index.get(word)
+#                print("vector: ", embedding_vector)
+#                if embedding_vector is not None:
+#                    embedding_matrix[i] = embedding_vector
+#                #print("Matrix: ", embedding_matrix)  
+#        #embedding_matrix.toarray()
+##        df_matrix = pd.DataFrame(embedding_matrix)
+##        df_matrix.shape()
+##        df_matrix.head()
+#        print("M: ", embedding_matrix[35376:35377])
+        #return(embedding_matrix)
     """
+    Create Matrix of vector/words    
+    """
+    def matrix(self, fname):    
+        vector = Vec()
+        df = vector.readCorp(fname)  
+        print("dfM: ", df)
+        vector.tf(df)
+        tagged=vector.tagged(df['descriptions'])
+        model2=vector.doc2vec(df['descriptions'])
+        matrix=vector.mapping(model2, tagged)
+        return(matrix.fillna(0, inplace=True))
+    
+    """
+    Count vectors for frequency count of words in document corpus   
+    """
+    def cntVec(self, df):  
+        # create a count vectorizer object 
+        count_vect = CountVectorizer(analyzer='word', token_pattern=r'\w{1,}')
+        count_vect.fit(df)
+        
+        #Split dataset
+        train_x, valid_x, train_y, valid_y= self.split(self, df)
+        
+        # transform the training and validation data using count vectorizer object
+        xtrain_count =  count_vect.transform(train_x)
+        xvalid_count =  count_vect.transform(valid_x)
+        return(xtrain_count, xvalid_count)
+        
+    """     
     TF-IDF
+    
     """
-    # word level tf-idf
-    # word level tf-idf
-#    tfidf_vect = TfidfVectorizer(analyzer='word', token_pattern=r'\w{1,}', max_features=5000)
-#    tfidf_vect.fit(trainDF['text'])
-#    xtrain_tfidf =  tfidf_vect.transform(train_x)
-#    xvalid_tfidf =  tfidf_vect.transform(valid_x)
-#    
-#    # ngram level tf-idf 
-#    tfidf_vect_ngram = TfidfVectorizer(analyzer='word', token_pattern=r'\w{1,}', ngram_range=(2,3), max_features=5000)
-#    tfidf_vect_ngram.fit(trainDF['text'])
-#    xtrain_tfidf_ngram =  tfidf_vect_ngram.transform(train_x)
-#    xvalid_tfidf_ngram =  tfidf_vect_ngram.transform(valid_x)
-#    
-#    # characters level tf-idf
-#    tfidf_vect_ngram_chars = TfidfVectorizer(analyzer='char', token_pattern=r'\w{1,}', ngram_range=(2,3), max_features=5000)
-#    tfidf_vect_ngram_chars.fit(trainDF['text'])
-#    xtrain_tfidf_ngram_chars =  tfidf_vect_ngram_chars.transform(train_x) 
-#    xvalid_tfidf_ngram_chars =  tfidf_vect_ngram_chars.transform(valid_x) 
+    def tf_idf(self, df):
+        
+        #Split dataset
+        train_x, valid_x, train_y, valid_y= self.split(self, df)
+        # word level tf-idf
+        # word level tf-idf
+        tfidf_vect = TfidfVectorizer(analyzer='word', token_pattern=r'\w{1,}', max_features=5000)
+        tfidf_vect.fit(df)
+        xtrain_tfidf =  tfidf_vect.transform(train_x)
+        xvalid_tfidf =  tfidf_vect.transform(valid_x)
+        
+        # ngram level tf-idf 
+        tfidf_vect_ngram = TfidfVectorizer(analyzer='word', token_pattern=r'\w{1,}', ngram_range=(2,3), max_features=5000)
+        tfidf_vect_ngram.fit(df)
+        xtrain_tfidf_ngram =  tfidf_vect_ngram.transform(train_x)
+        xvalid_tfidf_ngram =  tfidf_vect_ngram.transform(valid_x)
+        
+        # characters level tf-idf
+        tfidf_vect_ngram_chars = TfidfVectorizer(analyzer='char', token_pattern=r'\w{1,}', ngram_range=(2,3), max_features=5000)
+        tfidf_vect_ngram_chars.fit(df)
+        xtrain_tfidf_ngram_chars =  tfidf_vect_ngram_chars.transform(train_x) 
+        xvalid_tfidf_ngram_chars =  tfidf_vect_ngram_chars.transform(valid_x)
+        return(xtrain_tfidf, xvalid_tfidf,xtrain_tfidf_ngram, xvalid_tfidf_ngram, xtrain_tfidf_ngram_chars, xvalid_tfidf_ngram_chars)
     
 if __name__ == "__main__":
     pd.set_option('display.max_colwidth', -1)
@@ -215,9 +270,13 @@ if __name__ == "__main__":
     df = vector.readCorp(r'C:\Users\kishite\Documents\Education\Queens\MMAI\MMAI891\Project\Ppython\DataOutput\export_dataframe_all.csv')  
     vector.tf(df)
     tagged=vector.tagged(df['descriptions'])
-    #print("T: ", tagged)
+    print("T: ", tagged)
     model2=vector.doc2vec(df['descriptions'])
     vector.test(model2)
     #vector.assessing(model2, tagged)
-    vector.mapping(model2, tagged)
+    np.set_printoptions(threshold=np.inf)
+    matrix=vector.mapping(model2, tagged)
+    matrix.fillna(0, inplace=True)
+    matrix
+    export_csv = matrix.to_csv (r'C:\Users\kishite\Documents\Education\Queens\MMAI\MMAI891\Project\Ppython\DataOutMatrix\export_data_all.csv', index = None, header=True)
     

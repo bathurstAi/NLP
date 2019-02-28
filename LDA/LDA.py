@@ -13,9 +13,10 @@ import matplotlib.pyplot as plt
 
 #from gensim import models, corpora
 
-
-data = pd.read_csv(r'C:\Users\kishite\Documents\Education\Queens\MMAI\MMAI891\Project\Ppython\Final\Data\BGIS_Vendor_scaled1hot.csv',encoding = "ISO-8859-1")
-text_df = pd.read_csv(r'C:\Users\kishite\Documents\Education\Queens\MMAI\MMAI891\Project\Ppython\Final\DataPre\bgis_vendorPre_words.csv',encoding = "ISO-8859-1")
+### BGIS cleaned text
+data = pd.read_csv(r'BGIS_Vendor_scaled1hot.csv',encoding = "ISO-8859-1")
+##Preprocessed text
+text_df = pd.read_csv(r'\DataPre\bgis_vendorPre_words.csv',encoding = "ISO-8859-1")
 
 text_df =text_df['descriptions'].tolist()
 
@@ -121,17 +122,19 @@ pyLDAvis.save_html(visualisation, 'LDA_Visualization.html')
 
 
 
-# creat lda values 
+# create lda values 
 lda_value = []
 for token in tokenized_data:
     #print(text)
     bow = dictionary.doc2bow(token)
     lda_value.append(lda_model[bow])
 
-# bow = dictionary.doc2bow(clean_text(text_df[3]))
-# print(lda_model[bow])
-# bow3 = dictionary.doc2bow(tokenized_data[3])
-# print(lda_model[bow3])
+bow = dictionary.doc2bow(clean_text(text_df[3]))
+print(lda_model[bow])
+bow3 = dictionary.doc2bow(tokenized_data[3])
+print(lda_model[bow3])
+    
+##### USED TO MAP LDA WEIGHTED TOPICS TO CSV #########################################    
 embeddings_index_all = {}
 
 for i in range(len(lda_value)):
@@ -143,8 +146,7 @@ for i in range(len(lda_value)):
 pd.set_option('display.max_colwidth', -1)
 df_lda = pd.DataFrame.from_dict(embeddings_index_all, orient='index')
         
-#df_lda2 = pd.Dataframe(lda_value, df_lda.head()
 df_lda.fillna(0, inplace=True)
 df_lda.head()
 df_lda.tail()
-df_lda.to_csv (r'C:\Users\kishite\Documents\Education\Queens\MMAI\MMAI891\Project\Ppython\Final\LDA\LDA.csv', index = None, header=True)
+df_lda.to_csv (r'C:\LDA.csv', index = None, header=True)

@@ -2,29 +2,27 @@
 """
 Created on Thu Jan 31 22:37:13 2019
 
-@author: kishite
+@author: Everard Rodney
 """
 
-import io
 import re
 import pandas as pd
 
-from os.path import join
-from os import listdir, makedirs
 from pathos.multiprocessing import ProcessingPool as Pool
 
 from resources import Res
-from pprint import pprint
+
+"""
+    Module to process text data 
+            
+"""
 
 class Pipe():
 
     def __init__(self):
         """
             Initalizes DataProcessing class with utilities and parallel processing
-            Paras:
-                None
-            Returns:
-                None
+            
         """
         self.res = Res()
         self.pool = Pool()
@@ -39,44 +37,32 @@ class Pipe():
                 summaries: list of cleaned descriptions
         """
         description = [re.sub(r"[^a-zA-Z]", " ", description[i].lower()) for i in range(len(description))]
-        #print("Desc: ", description)
-        #return list(self.pool.map(self.res.clean_text, description))
         return list(self.pool.map(self.res.clean_text, description))
 
     def createDataframe(self, description):
         """
             Creates dataframe class of cleaned descriptions.
-            Paras:
-                reviews: cleaned concated reviews
-            Returns:
-                ratings: ratings of the reviews
+            
         """
         return pd.DataFrame({"descriptions": description})
 
     def ProcessData(self, column_names = ["Description_Document"]):
         """
             Runs DataProcessing class
-            Paras:
-                None
-            Returns:_
-                None
+            
         """
-         
-        dataframe = self.res.loadData(r"./Data", column_names)
-        #print("D: ", dataframe["Description_Document"])
+        # Look in directory for dataset 
+        dataframe = self.res.loadData(r'./Final/Data', column_names)
         description = self.getDescription(list(dataframe["Description_Document"]))
-        #Sprint("des: ", description)
-#        review = self.getReview(list(dataframe["reviewText"]))
-#        reviews = self.utls.concate_columns(summaries, review)
-#        rating = list(dataframe["overall"])
         return self.createDataframe(description)
 
 if __name__ == "__main__":
+############### CALL TO PRE-PROCESS DATA AND WRITE TO CSV ################################
     pd.set_option('display.max_colwidth', -1)
     Preprocessing = Pipe()
     dataframe = Preprocessing.ProcessData()
     print("df: ", dataframe)
-    export_csv = dataframe.to_csv (r'C:\Users\kishite\Documents\Education\Queens\MMAI\MMAI891\Project\Ppython\DataOutPre\export_dataframe_all3.csv', index = None, header=True)
+    export_csv = dataframe.to_csv (r'\DataPre\bgis_vendorPre_words.csv', index = None, header=True)
   
   
   

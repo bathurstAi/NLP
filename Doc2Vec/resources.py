@@ -2,7 +2,7 @@
 """
 Created on Thu Jan 31 19:10:19 2019
 
-@author: kishite
+@author: Everard Rodney
 """
 
 
@@ -28,9 +28,6 @@ from nltk.stem import SnowballStemmer
 from nltk.stem.lancaster import LancasterStemmer
 from nltk.stem import WordNetLemmatizer
 
-from nltk.tokenize import TreebankWordTokenizer
-from nltk.tokenize import WordPunctTokenizer 
-
 from nltk.util import ngrams
 
 #from ftfy import fix_encoding
@@ -44,7 +41,9 @@ from pattern.en import suggest
 from nltk.corpus import wordnet
 
 
-
+"""
+    Resources for pre-processing of text
+"""
 class Res():
     
     """
@@ -81,6 +80,8 @@ class Res():
         max_word=max(word[:][1])
         return max_word[0]
 
+
+########## Attempt to translate french in text ################
 #    def translate(self, raw):
 #         for index, row in raw.iterrows():
 #            # REINITIALIZE THE API
@@ -132,8 +133,7 @@ class Res():
             Return:
                 df: extracted dataframe
         """
-        print("GGGG")
-        return pd.read_excel('./Data/bgis_vendor_MMAI891.xlsx')
+        return pd.read_excel('./Data/BGIS_Vendor_scaled1hotindex.xlsx') ### read in scaled/one-hot dataset
 
     def remove_columns(self, dataframe, column_names):
         """
@@ -199,7 +199,6 @@ class Res():
     """
     def token_nize(self, tokens):
         words = word_tokenize(str(tokens))
-        print("T:", words)
         return(words)
         
     """
@@ -207,8 +206,6 @@ class Res():
     """
     def lower(self, tokens):
         low = [word.lower() for word in tokens]
-        print("hter")
-        print("L:", low)
         return(low)
         
         
@@ -238,6 +235,7 @@ class Res():
         ps = PorterStemmer()
         for w in token:
             print(ps.stem(w))
+            return(ps.stem(w))
 
     """
     remove all characters in sentence
@@ -281,7 +279,7 @@ class Res():
     """
     Select number of ngrams
     """
-    def nGrams(self, tokens, num=2):
+    def nGrams(self, tokens, num=4):
         grams = ngrams(tokens,num)
         return [grams for grams in grams]
     
@@ -413,7 +411,7 @@ class Res():
         else:
             return raw
 
-    def clean_text(self, text, short = True, length = True, contra = True, remove_stopwords = True, lemmatize = True, english = False, ngrams = False, spelling = True, spCy=False):
+    def clean_text(self, text, short = True, length = True, contra = True, remove_stopwords = True, lemmatize = True, english = True, ngrams = False, spelling = False, spCy=False, stem = False):
      
         """
             Remove unwanted characters, stopwords, and format the text to create fewer nulls word embeddings
@@ -428,7 +426,6 @@ class Res():
                 text: cleaned text data
         """
         if contra:
-            print("CLEAN")
             text = [self.remove_contractions(word) for word in sent_tokenize(text.lower())]
             text = " ".join(text)
     
@@ -440,14 +437,12 @@ class Res():
             text = re.sub(r'\'', ' ', text)
             text = re.sub(r'[^a-zA-Z]', " ", text)
         
-        if length:
-            print("LENGTH")
+        if length: 
         #text = text.split()
             text = self.reduce_lengthening(text)# for w in text]
         #text = " ".join(text)
         
         if spelling:
-           print("SPELLING")
            text = text.split()
            word = suggest(text)
            max_word=max(word[:][1])
@@ -455,37 +450,38 @@ class Res():
            text = " ".join(max_word[0])
         
         if remove_stopwords:
-            print("STOP")
             text = text.split()
-            stops = set(stopwords.words("english"))
+            stops = stopwords.words("english")
+            newStopWords = ['please',"name","thank"]
+            stops.extend(newStopWords)
             text = [w for w in text if not w in stops]
             text = " ".join(text)
             
         if short:
-           print("SHORT")
            text = ' '.join([w for w in text.split() if len(w)>3])
-           print("S: ", text)          
         
         if lemmatize:
-            print("LEM")
             text_sent = nltk.word_tokenize(text)
             text = [WordNetLemmatizer().lemmatize(w, self.getWordnetPos(w)) for w in text_sent]
             text = " ".join(text)
-        
+            
+        if stem:
+            text= self.portStem(text.split())
+            #text = " ".join(text)
+
+##### Attempt at using Spacy Lemmtization ##############        
         # Spacy Lemmtization
 #        if spCy:
 #            text = " ".join(self.spCy(text))
-        
-            
+    
+##### Use of WordNet ######            
         if english:
-            print("ENGLISH")
             text = ' '.join([w for w in text.split() if wordnet.synsets(w)])
-            print("P: ", text)
-            
-        if ngrams:
-            print("NGRAM")
+
+#### Creation of Ngrams ######                        
+        if ngrams:        
             text = text.split()
-            text = [self.nGrams(text)]
+            text = self.nGrams(text)
             #text = " ".join(text) 
             
         return text

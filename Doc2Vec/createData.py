@@ -2,21 +2,22 @@
 """
 Created on Thu Feb 14 07:46:35 2019
 
-@author: kishite
+@author: Everard Rodney
 """
 
-import re
+
 import pandas as pd
 import numpy as np
-
-from os.path import join
-
-from nltk.tokenize import word_tokenize
 
 from resources import Res
 from pipeData import Pipe
 from featureEng import Vec
 
+"""
+			Creates Feature set by concatenating features from different models with BGIS cleaned dataset 
+			that contain features related to cost
+            Output:  csv file that is fed into Machine Learning Model.  In our case that would be Random Forest and a shallow Neural Network
+""" 
 
 class Data():
     
@@ -48,12 +49,20 @@ class Data():
 			Returns:
 				None
 	""" 
-    def createTrainingCorpus(self, dfVec, fname):
+    def createTrainingCorpus(self, dfVec, fname):#fanme2, fname3): # Uncomment when adding additional nlp features
 		
         df = self.readCorp(fname)
-        df_feature = pd.concat([df,dfVec], axis=1)
-        df_feature.to_csv (r'C:\Users\kishite\Documents\Education\Queens\MMAI\MMAI891\Project\Ppython\DataFeatureSet\export_feature_all.csv', index = None, header=True)
-        print("DF: ", df_feature)
+        #df2 = self.readCorp(fname2)
+        #df3 = self.readCorp(fname3)
+        df_feature = pd.concat([df, dfVec], axis=1)#df2, df3, axis=1) Uncomment and delete for additional features
+        df_feature.fillna(0, inplace=True)
+        df_feature.to_csv (r'C:\DataFeat\BGIS_Vendor_1hot_feature_DOC2VEC.csv', index = None, header=True)
+        #df_feature.to_csv (r'C:\DataFeat\BGIS_Vendor_1hot_feature_LDA.csv', index = None, header=True)
+        #df_feature.to_csv (r'C:\DataFeat\BGIS_Vendor_1hot_feature_TF.csv', index = None, header=True)
+        #df_feature.to_csv (r'C:\DataFeat\BGIS_Vendor_1hot_feature_TF_LDA.csv', index = None, header=True)
+        #df_feature.to_csv (r'C:\DataFeat\BGIS_Vendor_1hot_feature_TFIDF.csv', index = None, header=True)
+        #df_feature.to_csv (r'C:\DataFeat\BGIS_Vendor_1hot_feature_TFIDF_LDA.csv', index = None, header=True)
+        #df_feature.to_csv (r'C:\DataFeat\BGIS_Vendor_1hot_feature_TFIDF_TF_LDA.csv', index = None, header=True)
         return(df_feature)
         
     """
@@ -69,12 +78,22 @@ class Data():
         #df = self.vector.matrix(fnamePre)
         df = self.readCorp(fnamePre)
         print("Pre:", df)
-        self.createTrainingCorpus(df, fname)
+        df_feat=self.createTrainingCorpus(df, fname)
+        return(df_feat)
         
 if __name__ == "__main__":
     np.set_printoptions(threshold=np.inf)
     data = Data()
-    data.createSet(r'DataOutMatrix\export_feature_all.csv', r'DataFeatureSet\BGIS_Vendor_1hot.csv')
+##############  Used to create desired dataset and combination of nlp methods for Machine Learning model and regression analysis #################
+    #df_LDA=data.createSet(r'Final\Data\BGIS_Vendor_scaled1hot_wo_description.csv', r'Final\LDA\LDA.csv')
+    #df_TF=data.createSet(r'Final\Data\BGIS_Vendor_scaled1hot_wo_description.csv', r'Final\TF\TF.csv'_)
+    #df_TF_IDF=data.createSet(r'Final\Data\BGIS_Vendor_scaled1hot_wo_description.csv', r'Final\TF_TDF\TF_IDF.csv')
+    #df_TF_LDA=data.createSet(r'Final\Data\BGIS_Vendor_scaled1hot_wo_description.csv', r'Final\LDA\LDA.csv', r'Final\TF\TF.csv')
+    #df_TF_IDF_LDA=data.createSet(r'Final\Data\BGIS_Vendor_scaled1hot_wo_description.csv', r'Final\LDA\LDA.csv', r'Final\TF_IDF\TF_IDF.csv')
+    #df_TF_TF_IDF_LDA=data.createSet(r'Final\Data\BGIS_Vendor_scaled1hot_wo_description.csv', r'Final\LDA\LDA.csv', , r'Final\TF\TF.csv, r'Final\TF_IDF\TF_IDF.csv')
+    df_F_DOC2VEC=data.createSet(r'Final\Data\BGIS_Vendor_scaled1hot_wo_description.csv', r'Final\doc2vec\bgis_matrix_words_param.csv')
+    np.isnan(df_F_DOC2VEC.values.any())
+    df_F_DOC2VEC.shape
         
         
         
